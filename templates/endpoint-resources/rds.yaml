@@ -78,8 +78,37 @@ Resources:
         "dbInstanceIdentifier": "${RdsInstance}"
         }'
 
+  DmsRdsEndpointAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dms-rds-endpoint-access-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - dms.ap-northeast-1.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: dms-rds-endpoint-access-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref RdsSecret
+
 Outputs:
   RdsSecretArn:
     Value: !Ref RdsSecret
     Export:
       Name: RdsSecretArn
+  DmsRdsEndpointAccessRoleArn:
+    Value: !GetAtt DmsRdsEndpointAccessRole.Arn
+    Export:
+      Name: DmsRdsEndpointAccessRoleArn
