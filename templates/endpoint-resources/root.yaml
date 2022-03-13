@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Endpoint Resources of Change Data Capture from Amazon RDS to Google BigQuery
+Parameters:
+  VpcId:
+    Type: String
+  VpcCidr:
+    Type: String
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Rds Instance SubnetIds
+  RdsMasterUsername:
+    Type: String
+  RdsMasterUserPassword:
+    Type: String
+
+Resources:
+  ########################################
+  # Amazon RDS for MySQL
+  ########################################
+  RdsStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: rds.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        VpcId: !Ref VpcId
+        VpcCidr: !Ref VpcCidr
+        RdsSubnetIds: { "Fn::Join": [",", { "Ref": "SubnetIds" }] }
+        RdsMasterUsername: !Ref RdsMasterUsername
+        RdsMasterUserPassword: !Ref RdsMasterUserPassword
+
+  ########################################
+  # Amazon S3
+  ########################################
+  S3Stack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: s3.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+
+  ########################################
+  # Amazon Kinesis Stream
+  ########################################
+  # KinesisStreamStack:
+  #   Type: AWS::Serverless::Application
+  #   Properties:
+  #     Location: kinesis-stream.yaml
+  #     Parameters:
+  #       StackName: !Ref AWS::StackName
+
+  ########################################
+  # AWS Lambda
+  ########################################
+  # LambdaStack:
+  #   Type: AWS::Serverless::Application
+  #   Properties:
+  #     Location: lambda.yaml
+  #     Parameters:
+  #       StackName: !Ref AWS::StackName

@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Amazon S3 Bucket for Change Data Capture from Amazon RDS to Google BigQuery
+
+Parameters:
+  StackName:
+    Type: String
+
+Resources:
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref StackName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: True
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+
+  DmsS3EndpointAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dms-s3-endpoint-access-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - dms.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: dms-s3-endpoint-access-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt S3Bucket.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub ${S3Bucket.Arn}/*
+
+Outputs:
+  S3BucketName:
+    Value: !Ref S3Bucket
+    Export:
+      Name: S3BucketName
+  DmsS3EndpointAccessRoleArn:
+    Value: !GetAtt DmsS3EndpointAccessRole.Arn
+    Export:
+      Name: DmsS3EndpointAccessRoleArn
