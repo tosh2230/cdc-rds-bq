@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AWS DMS for Change Data Capture from Amazon RDS to Google BigQuery
+Parameters:
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Replication Instance SubnetIds
+  SourceEndpointArn:
+    Type: String
+  TargetEndpointArn:
+    Type: String
+
+Resources:
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-endpoint.html
+  # 2022-03-12: Currently, the only endpoint setting types that AWS CloudFormation supports are DynamoDBSettings, ElasticSearchSettings, and NeptuneSettings.
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-replicationtask.html
+  ReplicationTask:
+    Type: AWS::DMS::ReplicationTask
+    Properties:
+      MigrationType: cdc
+      SourceEndpointArn: !Ref SourceEndpointArn
+      TargetEndpointArn: !Ref TargetEndpointArn
+      ReplicationInstanceArn: !Ref ReplicationInstance
+      ReplicationTaskIdentifier: !Ref AWS::StackName
+      ReplicationTaskSettings: '{
+        "StreamBufferSettings":
+        {
+        "StreamBufferCount": 3,
+        "CtrlStreamBufferSizeInMB": 5,
+        "StreamBufferSizeInMB": 8,
+        },
+        "ErrorBehavior":
+        {
+        "FailOnNoTablesCaptured": true,
+        "ApplyErrorUpdatePolicy": "LOG_ERROR",
+        "FailOnTransactionConsistencyBreached": false,
+        "RecoverableErrorThrottlingMax": 1800,
+        "DataErrorEscalationPolicy": "SUSPEND_TABLE",
+        "ApplyErrorEscalationCount": 0,
+        "RecoverableErrorStopRetryAfterThrottlingMax": true,
+        "RecoverableErrorThrottling": true,
+        "ApplyErrorFailOnTruncationDdl": false,
+        "DataTruncationErrorPolicy": "LOG_ERROR",
+        "ApplyErrorInsertPolicy": "LOG_ERROR",
+        "ApplyErrorEscalationPolicy": "LOG_ERROR",
+        "RecoverableErrorCount": -1,
+        "DataErrorEscalationCount": 0,
+        "TableErrorEscalationPolicy": "STOP_TASK",
+        "RecoverableErrorInterval": 5,
+        "ApplyErrorDeletePolicy": "IGNORE_RECORD",
+        "TableErrorEscalationCount": 0,
+        "FullLoadIgnoreConflicts": true,
+        "DataErrorPolicy": "LOG_ERROR",
+        "TableErrorPolicy": "SUSPEND_TABLE",
+        },
+        "TTSettings":
+        {
+        "TTS3Settings": null,
+        "TTRecordSettings": null,
+        "EnableTT": false,
+        },
+        "FullLoadSettings":
+        {
+        "CommitRate": 10000,
+        "StopTaskCachedChangesApplied": false,
+        "StopTaskCachedChangesNotApplied": false,
+        "MaxFullLoadSubTasks": 8,
+        "TransactionConsistencyTimeout": 600,
+        "CreatePkAfterFullLoad": false,
+        "TargetTablePrepMode": "DO_NOTHING",
+        },
+        "TargetMetadata":
+        {
+        "ParallelApplyBufferSize": 0,
+        "ParallelApplyQueuesPerThread": 0,
+        "ParallelApplyThreads": 0,
+        "TargetSchema": "",
+        "InlineLobMaxSize": 0,
+        "ParallelLoadQueuesPerThread": 0,
+        "SupportLobs": true,
+        "LobChunkSize": 0,
+        "TaskRecoveryTableEnabled": false,
+        "ParallelLoadThreads": 0,
+        "LobMaxSize": 32,
+        "BatchApplyEnabled": false,
+        "FullLobMode": false,
+        "LimitedSizeLobMode": true,
+        "LoadMaxFileSize": 0,
+        "ParallelLoadBufferSize": 0,
+        },
+        "BeforeImageSettings": null,
+        "ControlTablesSettings":
+        {
+        "historyTimeslotInMinutes": 5,
+        "HistoryTimeslotInMinutes": 5,
+        "StatusTableEnabled": false,
+        "SuspendedTablesTableEnabled": false,
+        "HistoryTableEnabled": false,
+        "ControlSchema": "",
+        "FullLoadExceptionTableEnabled": false,
+        },
+        "LoopbackPreventionSettings": null,
+        "CharacterSetSettings": null,
+        "FailTaskWhenCleanTaskResourceFailed": false,
+        "ChangeProcessingTuning":
+        {
+        "StatementCacheSize": 50,
+        "CommitTimeout": 1,
+        "BatchApplyPreserveTransaction": true,
+        "BatchApplyTimeoutMin": 1,
+        "BatchSplitSize": 0,
+        "BatchApplyTimeoutMax": 30,
+        "MinTransactionSize": 1000,
+        "MemoryKeepTime": 60,
+        "BatchApplyMemoryLimit": 500,
+        "MemoryLimitTotal": 1024,
+        },
+        "ChangeProcessingDdlHandlingPolicy":
+        {
+        "HandleSourceTableDropped": true,
+        "HandleSourceTableTruncated": true,
+        "HandleSourceTableAltered": true,
+        },
+        "PostProcessingRules": null,
+        }'
+      TableMappings: '{
+        "rules":
+        [
+        {
+        "rule-type": "selection",
+        "rule-id": "1",
+        "rule-name": "1",
+        "object-locator": { "schema-name": "%", "table-name": "%" },
+        "rule-action": "include"
+        }
+        ]
+        }'
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-replicationinstance.html
+  ReplicationInstance:
+    Type: AWS::DMS::ReplicationInstance
+    Properties:
+      ReplicationInstanceIdentifier: !Ref AWS::StackName
+      ReplicationInstanceClass: dms.t2.small
+      AllocatedStorage: 10
+      MultiAZ: False
+      AvailabilityZone: ap-northeast-1a
+      PubliclyAccessible: False
+      PreferredMaintenanceWindow: Tue:06:00-Tue:06:30
+      AllowMajorVersionUpgrade: False
+      AutoMinorVersionUpgrade: True
+      ReplicationSubnetGroupIdentifier: !Ref ReplicationSubnetGroup
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-replicationsubnetgroup.html
+  ReplicationSubnetGroup:
+    Type: AWS::DMS::ReplicationSubnetGroup
+    Properties:
+      ReplicationSubnetGroupDescription: !Ref AWS::StackName
+      SubnetIds: !Ref SubnetIds
+    DependsOn: DmsVpcRole
+
+  # https://forums.aws.amazon.com/thread.jspa?messageID=921775
+  DmsVpcRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dms-vpc-role
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - dms.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole
