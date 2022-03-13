@@ -44,6 +44,7 @@ Resources:
       VPCSecurityGroups:
         - !Ref RdsSecurityGroup
 
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbsubnet-group.html
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -51,6 +52,7 @@ Resources:
       DBSubnetGroupDescription: !Sub ${StackName}-subnet-group
       SubnetIds: !Ref RdsSubnetIds
 
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
   RdsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -78,6 +80,7 @@ Resources:
         "dbInstanceIdentifier": "${RdsInstance}"
         }'
 
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
   DmsRdsEndpointAccessRole:
     Type: AWS::IAM::Role
     Properties:

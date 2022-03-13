@@ -7,7 +7,7 @@ deploy-endpoint-resources:
 	@sam build -t templates/endpoint-resources/root.yaml
 	@sam deploy -t templates/endpoint-resources/root.yaml --no-confirm-changeset --no-fail-on-empty-changeset
 
-create-mysql-endpoint:
+create-dms-endpoint-mysql:
 	aws dms create-endpoint \
 		--endpoint-identifier source-endpoint-mysql \
 		--engine-name mysql \
@@ -17,9 +17,11 @@ create-mysql-endpoint:
 			"ServerTimezone": "UTC", \
 			"SecretsManagerAccessRoleArn": "$(RDS_SECRETS_ROLE_ARN)", \
 			"SecretsManagerSecretId": "$(RDS_SECRETS_ARN)" \
-		}'
+		}' \
+		--no-cli-pager \
+		--output json
 
-create-s3-endpoint:
+create-dms-endpoint-s3:
 	aws dms create-endpoint \
 		--endpoint-identifier target-endpoint-s3 \
 		--engine-name s3 \
@@ -32,4 +34,6 @@ create-s3-endpoint:
 			"EncodingType": "plain-dictionary", \
 			"DictPageSizeLimit": 3072000, \
 			"EnableStatistics": false \
-		}'
+		}' \
+		--no-cli-pager \
+		--output json

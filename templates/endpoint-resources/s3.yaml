@@ -25,6 +25,7 @@ Resources:
         IgnorePublicAcls: True
         RestrictPublicBuckets: True
 
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
   DmsS3EndpointAccessRole:
     Type: AWS::IAM::Role
     Properties:
