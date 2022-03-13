@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Amazon RDS Instance for AWS DMS Endpoints
+Parameters:
+  StackName:
+    Type: String
+  VpcId:
+    Type: String
+  VpcCidrBlock:
+    Type: String
+  RdsSubnetIds:
+    Type: CommaDelimitedList
+    Description: Rds Instance SubnetIds
+  RdsMasterUsername:
+    Type: String
+  RdsMasterUserPassword:
+    Type: String
+  RdsDbName:
+    Type: String
+    Default: cdc
+
+Resources:
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-rds-database-instance.html
+  RdsInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      DBInstanceClass: db.t2.small
+      DBName: !Ref RdsDbName
+      Engine: mysql
+      EngineVersion: 8.0
+      AllowMajorVersionUpgrade: False
+      AutoMinorVersionUpgrade: True
+      LicenseModel: general-public-license
+      MasterUsername: !Ref RdsMasterUsername
+      MasterUserPassword: !Ref RdsMasterUserPassword
+      StorageEncrypted: True
+      StorageType: standard
+      AllocatedStorage: 10
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: False
+      VPCSecurityGroups:
+        - !Ref RdsSecurityGroup
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbsubnet-group.html
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: !Sub ${StackName}-subnet-group
+      DBSubnetGroupDescription: !Sub ${StackName}-subnet-group
+      SubnetIds: !Ref RdsSubnetIds
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-security-group.html
+  RdsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VpcId
+      GroupName: !Sub ${StackName}-rds-security-group
+      GroupDescription: !Sub ${StackName}-rds-security-group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: !Ref VpcCidrBlock
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-secretsmanager-secret.html
+  RdsSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Ref StackName
+      SecretString: !Sub '{
+        "username": "${RdsMasterUsername}",
+        "password": "${RdsMasterUserPassword}",
+        "engine": "mysql",
+        "host": "${RdsInstance.Endpoint.Address}",
+        "port": ${RdsInstance.Endpoint.Port},
+        "dbname": "${RdsDbName}",
+        "dbInstanceIdentifier": "${RdsInstance}"
+        }'
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
+  DmsRdsEndpointAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dms-rds-endpoint-access-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - dms.ap-northeast-1.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: dms-rds-endpoint-access-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref RdsSecret
+
+Outputs:
+  RdsSecretArn:
+    Value: !Ref RdsSecret
+    Export:
+      Name: RdsSecretArn
+  DmsRdsEndpointAccessRoleArn:
+    Value: !GetAtt DmsRdsEndpointAccessRole.Arn
+    Export:
+      Name: DmsRdsEndpointAccessRoleArn

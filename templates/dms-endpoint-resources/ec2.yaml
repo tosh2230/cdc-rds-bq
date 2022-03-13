@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Amazon EC2 for RDS Records Registration
+Parameters:
+  StackName:
+    Type: String
+  VpcId:
+    Type: String
+  Ec2InstanceSubnetId:
+    Type: String
+  Ec2InstanceIpAddress:
+    Type: String
+  Ec2SsmRoleId:
+    Type: String
+  Ec2ImageIdAmzn2:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  Ec2ImageIdWindows:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /aws/service/ami-windows-latest/Windows_Server-2016-Japanese-Full-Base
+
+Resources:
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref Ec2ImageIdAmzn2
+      InstanceType: t3.nano
+      IamInstanceProfile: !Ref Ec2IamInstanceProfile
+      NetworkInterfaces:
+        - SubnetId: !Ref Ec2InstanceSubnetId
+          PrivateIpAddress: !Ref Ec2InstanceIpAddress
+          GroupSet:
+            - !Ref Ec2SecurityGroup
+          AssociatePublicIpAddress: false
+          DeviceIndex: 0
+      CreditSpecification:
+        CPUCredits: standard
+
+  Ec2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${StackName}-ec2-security-group
+      GroupDescription: EC2 Security Group
+      VpcId: !Ref VpcId
+
+  Ec2IamInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref Ec2SsmRoleId
+      InstanceProfileName: !Sub ${StackName}-thin-ssm-server

@@ -1,12 +1,14 @@
+TEMPLATE_FILE=
+
 include .env
 
-dryrun-dms-endpoint-resources:
-	@sam build -t templates/dms-endpoints/root.yaml
-	@sam deploy -t templates/dms-endpoints/root.yaml --no-execute-changeset
+dryrun:
+	@sam build -t ${TEMPLATE_FILE}
+	@sam deploy -t ${TEMPLATE_FILE} --no-execute-changeset
 
-deploy-dms-endpoint-resources:
-	@sam build -t templates/dms-endpoints/root.yaml
-	@sam deploy -t templates/dms-endpoints/root.yaml --no-confirm-changeset --no-fail-on-empty-changeset
+deploy:
+	@sam build -t ${TEMPLATE_FILE}
+	@sam deploy -t ${TEMPLATE_FILE} --no-confirm-changeset --no-fail-on-empty-changeset
 
 create-dms-endpoint-mysql:
 	aws dms create-endpoint \
@@ -30,6 +32,7 @@ create-dms-endpoint-s3:
 		--s3-settings '{ \
 			"ServiceAccessRoleArn": "$(S3_ENDPOINT_ROLE_ARN)", \
 			"BucketName": "$(S3_BUCKET_NAME)", \
+			"EncryptionMode": "SSE_S3", \
 			"DataFormat": "parquet", \
 			"CompressionType": "GZIP", \
 			"EncodingType": "plain-dictionary", \
@@ -38,6 +41,3 @@ create-dms-endpoint-s3:
 		}' \
 		--no-cli-pager \
 		--output json
-
-deploy-dms-resources:
-	@sam build -t templates/dms/dms.yaml

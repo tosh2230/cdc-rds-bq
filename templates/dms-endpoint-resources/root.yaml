@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AWS DMS Endpoint Resources for Change Data Capture from Amazon RDS to Google BigQuery
+Parameters:
+  RdsMasterUsername:
+    Type: String
+  RdsMasterUserPassword:
+    Type: String
+
+Resources:
+  ########################################
+  # Amazon VPC
+  ########################################
+  VpcStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: vpc.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        VpcCidr: 172.21
+        EnableNATGateway: True
+
+  ########################################
+  # Amazon EC2
+  ########################################
+  Ec2Stack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: ec2.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        VpcId: !GetAtt VpcStack.Outputs.VpcId
+        Ec2InstanceSubnetId: !GetAtt VpcStack.Outputs.PrivateSubnetA
+        Ec2InstanceIpAddress: 172.21.4.10
+        Ec2SsmRoleId: !GetAtt VpcStack.Outputs.Ec2SsmRoleId
+
+  ########################################
+  # Amazon RDS for MySQL
+  ########################################
+  RdsStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: rds.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        VpcId: !GetAtt VpcStack.Outputs.VpcId
+        VpcCidrBlock: !GetAtt VpcStack.Outputs.VpcCidrBlock
+        RdsSubnetIds: !Join
+          - ","
+          - - !GetAtt VpcStack.Outputs.PrivateSubnetA
+            - !GetAtt VpcStack.Outputs.PrivateSubnetC
+        RdsMasterUsername: !Ref RdsMasterUsername
+        RdsMasterUserPassword: !Ref RdsMasterUserPassword
+
+  ########################################
+  # Amazon S3
+  ########################################
+  S3Stack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: s3.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+
+  ########################################
+  # Amazon Kinesis Stream
+  ########################################
+  # KinesisStreamStack:
+  #   Type: AWS::Serverless::Application
+  #   Properties:
+  #     Location: kinesis-stream.yaml
+  #     Parameters:
+  #       StackName: !Ref AWS::StackName
+
+  ########################################
+  # AWS Lambda
+  ########################################
+  # LambdaStack:
+  #   Type: AWS::Serverless::Application
+  #   Properties:
+  #     Location: lambda.yaml
+  #     Parameters:
+  #       StackName: !Ref AWS::StackName
