@@ -82,3 +82,13 @@ Resources:
   #     Location: lambda.yaml
   #     Parameters:
   #       StackName: !Ref AWS::StackName
+
+Outputs:
+  PrivateSubnetA:
+    Value: !GetAtt VpcStack.Outputs.PrivateSubnetA
+    Export:
+      Name: !Sub ${AWS::StackName}-PrivateSubnetA
+  PrivateSubnetC:
+    Value: !GetAtt VpcStack.Outputs.PrivateSubnetC
+    Export:
+      Name: !Sub ${AWS::StackName}-PrivateSubnetC

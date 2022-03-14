@@ -10,6 +10,7 @@ deploy:
 	@sam build -t ${TEMPLATE_FILE}
 	@sam deploy -t ${TEMPLATE_FILE} --no-confirm-changeset --no-fail-on-empty-changeset
 
+# https://docs.aws.amazon.com/cli/latest/reference/dms/create-endpoint.html
 create-dms-endpoint-mysql:
 	aws dms create-endpoint \
 		--endpoint-identifier source-endpoint-mysql \
@@ -33,9 +34,12 @@ create-dms-endpoint-s3:
 			"ServiceAccessRoleArn": "$(S3_ENDPOINT_ROLE_ARN)", \
 			"BucketName": "$(S3_BUCKET_NAME)", \
 			"EncryptionMode": "SSE_S3", \
-			"DataFormat": "parquet", \
-			"CompressionType": "GZIP", \
+			"DataFormat": "csv", \
+			"CompressionType": "NONE", \
 			"EncodingType": "plain-dictionary", \
+			"AddColumnName": true, \
+			"TimestampColumnName": "CdcTimestamp", \
+			"CdcMaxBatchInterval": 60, \
 			"DictPageSizeLimit": 3072000, \
 			"EnableStatistics": false \
 		}' \

@@ -38,10 +38,20 @@ Resources:
       StorageEncrypted: True
       StorageType: standard
       AllocatedStorage: 10
+      DBParameterGroupName: !Ref DBParameterGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       PubliclyAccessible: False
       VPCSecurityGroups:
         - !Ref RdsSecurityGroup
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-rds-dbparametergroup.html
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: Parameter group for mysql 8.0
+      Family: "mysql8.0"
+      Parameters:
+        "binlog_format": "ROW"
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-rds-dbsubnet-group.html
   DBSubnetGroup:
@@ -108,9 +118,5 @@ Resources:
 Outputs:
   RdsSecretArn:
     Value: !Ref RdsSecret
-    Export:
-      Name: RdsSecretArn
   DmsRdsEndpointAccessRoleArn:
     Value: !GetAtt DmsRdsEndpointAccessRole.Arn
-    Export:
-      Name: DmsRdsEndpointAccessRoleArn

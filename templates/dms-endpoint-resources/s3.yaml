@@ -59,9 +59,5 @@ Resources:
 Outputs:
   S3BucketName:
     Value: !Ref S3Bucket
-    Export:
-      Name: S3BucketName
   DmsS3EndpointAccessRoleArn:
     Value: !GetAtt DmsS3EndpointAccessRole.Arn
-    Export:
-      Name: DmsS3EndpointAccessRoleArn

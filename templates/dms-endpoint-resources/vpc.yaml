@@ -301,21 +301,11 @@ Resources:
 Outputs:
   VpcId:
     Value: !Ref Vpc
-    Export:
-      Name: VpcId
   VpcCidrBlock:
     Value: !GetAtt Vpc.CidrBlock
-    Export:
-      Name: VpcCidrBlock
   PrivateSubnetA:
     Value: !Ref PrivateSubnetA
-    Export:
-      Name: PrivateSubnetA
   PrivateSubnetC:
     Value: !Ref PrivateSubnetC
-    Export:
-      Name: PrivateSubnetC
   Ec2SsmRoleId:
     Value: !Ref Ec2SsmRole
-    Export:
-      Name: Ec2SsmRoleId

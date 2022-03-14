@@ -3,9 +3,9 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   AWS DMS for Change Data Capture from Amazon RDS to Google BigQuery
 Parameters:
-  SubnetIds:
-    Type: CommaDelimitedList
-    Description: Replication Instance SubnetIds
+  DmsEndpointResourcesStack:
+    Type: String
+    Default: cdc-rds-bq-dms-endpoint-resources
   SourceEndpointArn:
     Type: String
   TargetEndpointArn:
@@ -158,7 +158,9 @@ Resources:
     Type: AWS::DMS::ReplicationSubnetGroup
     Properties:
       ReplicationSubnetGroupDescription: !Ref AWS::StackName
-      SubnetIds: !Ref SubnetIds
+      SubnetIds:
+        - Fn::ImportValue: !Sub ${DmsEndpointResourcesStack}-PrivateSubnetA
+        - Fn::ImportValue: !Sub ${DmsEndpointResourcesStack}-PrivateSubnetC
     DependsOn: DmsVpcRole
 
   # https://forums.aws.amazon.com/thread.jspa?messageID=921775
