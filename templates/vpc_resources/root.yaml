@@ -23,7 +23,7 @@ Resources:
       Parameters:
         StackName: !Ref AWS::StackName
         VpcCidr: 172.21
-        EnableNATGateway: True
+        EnableNATGateway: !Ref EnableNATGateway
 
   ########################################
   # Amazon EC2
