@@ -7,6 +7,10 @@ Parameters:
     Type: String
   RdsMasterUserPassword:
     Type: String
+  EnableNATGateway:
+    Default: true
+    Type: String
+    AllowedValues: [true, false]
 
 Resources:
   ########################################

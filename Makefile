@@ -49,3 +49,6 @@ create-dms-endpoint-s3:
 		}' \
 		--no-cli-pager \
 		--output json
+
+deploy-dms:
+	@make deploy TEMPLATE_FILE=templates/dms/dms.yaml
