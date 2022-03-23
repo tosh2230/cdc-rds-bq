@@ -10,6 +10,10 @@ deploy:
 	@sam build -t ${TEMPLATE_FILE}
 	@sam deploy -t ${TEMPLATE_FILE} --no-confirm-changeset --no-fail-on-empty-changeset
 
+setup:
+	@make deploy TEMPLATE_FILE=templates/vpc_resources/root.yaml
+	@make deploy TEMPLATE_FILE=templates/s3/s3.yaml
+
 # https://docs.aws.amazon.com/cli/latest/reference/dms/create-endpoint.html
 create-dms-endpoint-mysql:
 	aws dms create-endpoint \

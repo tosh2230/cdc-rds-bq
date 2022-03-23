@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  AWS DMS Endpoint Resources for Change Data Capture from Amazon RDS to Google BigQuery
+  VPC Resources for Change Data Capture from Amazon RDS to Google BigQuery
 Parameters:
   RdsMasterUsername:
     Type: String
@@ -52,36 +52,6 @@ Resources:
             - !GetAtt VpcStack.Outputs.PrivateSubnetC
         RdsMasterUsername: !Ref RdsMasterUsername
         RdsMasterUserPassword: !Ref RdsMasterUserPassword
-
-  ########################################
-  # Amazon S3
-  ########################################
-  S3Stack:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: s3.yaml
-      Parameters:
-        StackName: !Ref AWS::StackName
-
-  ########################################
-  # Amazon Kinesis Stream
-  ########################################
-  # KinesisStreamStack:
-  #   Type: AWS::Serverless::Application
-  #   Properties:
-  #     Location: kinesis-stream.yaml
-  #     Parameters:
-  #       StackName: !Ref AWS::StackName
-
-  ########################################
-  # AWS Lambda
-  ########################################
-  # LambdaStack:
-  #   Type: AWS::Serverless::Application
-  #   Properties:
-  #     Location: lambda.yaml
-  #     Parameters:
-  #       StackName: !Ref AWS::StackName
 
 Outputs:
   PrivateSubnetA:

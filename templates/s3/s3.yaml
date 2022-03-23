@@ -2,16 +2,13 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Amazon S3 Bucket for AWS DMS Endpoints
-Parameters:
-  StackName:
-    Type: String
 
 Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref StackName
+      BucketName: !Ref AWS::StackName
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - BucketKeyEnabled: True
