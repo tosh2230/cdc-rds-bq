@@ -38,17 +38,20 @@ create-dms-endpoint-s3:
 			"ServiceAccessRoleArn": "$(S3_ENDPOINT_ROLE_ARN)", \
 			"BucketName": "$(S3_BUCKET_NAME)", \
 			"EncryptionMode": "SSE_S3", \
-			"DataFormat": "csv", \
-			"CompressionType": "NONE", \
+			"DataFormat": "parquet", \
+			"CompressionType": "GZIP", \
 			"EncodingType": "plain-dictionary", \
 			"AddColumnName": true, \
 			"TimestampColumnName": "CdcTimestamp", \
 			"CdcMaxBatchInterval": 60, \
 			"DictPageSizeLimit": 3072000, \
+			"DatePartitionEnabled": true, \
+			"DatePartitionSequence": "YYYYMMDD", \
+			"DatePartitionDelimiter": "SLASH", \
 			"EnableStatistics": false \
 		}' \
 		--no-cli-pager \
 		--output json
 
-deploy-dms:
-	@make deploy TEMPLATE_FILE=templates/dms/dms.yaml
+deploy-dms-task:
+	@make deploy TEMPLATE_FILE=templates/dms_task/dms_task.yaml
