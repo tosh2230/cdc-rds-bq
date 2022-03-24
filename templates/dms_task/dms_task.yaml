@@ -1,11 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  AWS DMS for Change Data Capture from Amazon RDS to Google BigQuery
+  AWS DMS Migration tasks
 Parameters:
-  VpcResourcesStack:
+  ReplicationInstanceArn:
     Type: String
-    Default: cdc-rds-bq-vpc-resources
   SourceEndpointArn:
     Type: String
   TargetEndpointArn:
@@ -22,7 +21,7 @@ Resources:
       MigrationType: cdc
       SourceEndpointArn: !Ref SourceEndpointArn
       TargetEndpointArn: !Ref TargetEndpointArn
-      ReplicationInstanceArn: !Ref ReplicationInstance
+      ReplicationInstanceArn: !Ref ReplicationInstanceArn
       ReplicationTaskIdentifier: !Ref AWS::StackName
       ReplicationTaskSettings: '{
         "StreamBufferSettings": {
@@ -126,46 +125,3 @@ Resources:
           "rule-action": "include"
         }]
         }'
-
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-replicationinstance.html
-  ReplicationInstance:
-    Type: AWS::DMS::ReplicationInstance
-    Properties:
-      ReplicationInstanceIdentifier: !Ref AWS::StackName
-      ReplicationInstanceClass: dms.t2.small
-      AllocatedStorage: 10
-      MultiAZ: False
-      AvailabilityZone: ap-northeast-1a
-      PubliclyAccessible: False
-      PreferredMaintenanceWindow: Tue:06:00-Tue:06:30
-      AllowMajorVersionUpgrade: False
-      AutoMinorVersionUpgrade: True
-      ReplicationSubnetGroupIdentifier: !Ref ReplicationSubnetGroup
-
-  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-replicationsubnetgroup.html
-  ReplicationSubnetGroup:
-    Type: AWS::DMS::ReplicationSubnetGroup
-    Properties:
-      ReplicationSubnetGroupDescription: !Ref AWS::StackName
-      SubnetIds:
-        - Fn::ImportValue: !Sub ${VpcResourcesStack}-PrivateSubnetA
-        - Fn::ImportValue: !Sub ${VpcResourcesStack}-PrivateSubnetC
-    DependsOn: DmsVpcRole
-
-  # https://forums.aws.amazon.com/thread.jspa?messageID=921775
-  DmsVpcRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dms-vpc-role
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - dms.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole
