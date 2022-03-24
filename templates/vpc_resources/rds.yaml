@@ -26,7 +26,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       AvailabilityZone: ap-northeast-1a
-      DBInstanceClass: db.t2.small
+      DBInstanceClass: db.t3.small
       DBName: !Ref RdsDbName
       Engine: mysql
       EngineVersion: 8.0
@@ -116,6 +116,10 @@ Resources:
                   - !Ref RdsSecret
 
 Outputs:
+  RdsInstanceEndpointAddress:
+    Value: !GetAtt RdsInstance.Endpoint.Address
+  RdsInstanceEndpointPort:
+    Value: !GetAtt RdsInstance.Endpoint.Port
   RdsSecretArn:
     Value: !Ref RdsSecret
   DmsRdsEndpointAccessRoleArn:

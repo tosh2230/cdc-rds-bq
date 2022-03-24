@@ -57,12 +57,16 @@ Resources:
         RdsMasterUsername: !Ref RdsMasterUsername
         RdsMasterUserPassword: !Ref RdsMasterUserPassword
 
-Outputs:
-  PrivateSubnetA:
-    Value: !GetAtt VpcStack.Outputs.PrivateSubnetA
-    Export:
-      Name: !Sub ${AWS::StackName}-PrivateSubnetA
-  PrivateSubnetC:
-    Value: !GetAtt VpcStack.Outputs.PrivateSubnetC
-    Export:
-      Name: !Sub ${AWS::StackName}-PrivateSubnetC
+  ########################################
+  # AWS DMS Replication Instance
+  ########################################
+  DmsStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: dms.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        DmsSubnetIds: !Join
+          - ","
+          - - !GetAtt VpcStack.Outputs.PrivateSubnetA
+            - !GetAtt VpcStack.Outputs.PrivateSubnetC
