@@ -29,6 +29,7 @@ create-dms-endpoint-mysql:
 		--no-cli-pager \
 		--output json
 
+# https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.S3.html#CHAP_Target.S3.Configuring
 create-dms-endpoint-s3:
 	aws dms create-endpoint \
 		--endpoint-identifier target-endpoint-s3 \
@@ -39,16 +40,19 @@ create-dms-endpoint-s3:
 			"BucketName": "$(S3_BUCKET_NAME)", \
 			"EncryptionMode": "SSE_S3", \
 			"DataFormat": "parquet", \
+			"ParquetVersion": "PARQUET_2_0", \
 			"CompressionType": "GZIP", \
-			"EncodingType": "plain-dictionary", \
+			"EnableStatistics": true, \
+			"EncodingType": "rle-dictionary", \
+			"CdcMaxBatchInterval": 60, \
+			"DataPageSize": 1024000, \
+			"RowGroupLength": 10024, \
+			"DictPageSizeLimit": 1024000, \
 			"AddColumnName": true, \
 			"TimestampColumnName": "CdcTimestamp", \
-			"CdcMaxBatchInterval": 60, \
-			"DictPageSizeLimit": 3072000, \
 			"DatePartitionEnabled": true, \
 			"DatePartitionSequence": "YYYYMMDD", \
-			"DatePartitionDelimiter": "SLASH", \
-			"EnableStatistics": false \
+			"DatePartitionDelimiter": "SLASH" \
 		}' \
 		--no-cli-pager \
 		--output json
