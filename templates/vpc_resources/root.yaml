@@ -11,6 +11,8 @@ Parameters:
     Default: true
     Type: String
     AllowedValues: [true, false]
+  S3Stack:
+    Type: String
 
 Resources:
   ########################################

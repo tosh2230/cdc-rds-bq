@@ -56,5 +56,9 @@ Resources:
 Outputs:
   S3BucketName:
     Value: !Ref S3Bucket
+    Export:
+      Name: !Sub ${AWS::StackName}-S3BucketName
   DmsS3EndpointAccessRoleArn:
     Value: !GetAtt DmsS3EndpointAccessRole.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-DmsS3EndpointAccessRoleArn

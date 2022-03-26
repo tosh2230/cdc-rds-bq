@@ -26,7 +26,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       AvailabilityZone: ap-northeast-1a
-      DBInstanceClass: db.t3.small
+      DBInstanceClass: db.t2.small
       DBName: !Ref RdsDbName
       Engine: mysql
       EngineVersion: 8.0
@@ -80,13 +80,13 @@ Resources:
     Properties:
       Name: !Ref StackName
       SecretString: !Sub '{
-        "username": "${RdsMasterUsername}",
-        "password": "${RdsMasterUserPassword}",
-        "engine": "mysql",
-        "host": "${RdsInstance.Endpoint.Address}",
-        "port": ${RdsInstance.Endpoint.Port},
-        "dbname": "${RdsDbName}",
-        "dbInstanceIdentifier": "${RdsInstance}"
+          "username": "${RdsMasterUsername}",
+          "password": "${RdsMasterUserPassword}",
+          "engine": "mysql",
+          "host": "${RdsInstance.Endpoint.Address}",
+          "port": ${RdsInstance.Endpoint.Port},
+          "dbname": "${RdsDbName}",
+          "dbInstanceIdentifier": "${RdsInstance}"
         }'
 
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-role.html
@@ -122,5 +122,9 @@ Outputs:
     Value: !GetAtt RdsInstance.Endpoint.Port
   RdsSecretArn:
     Value: !Ref RdsSecret
+    Export:
+      Name: !Sub ${StackName}-RdsSecretArn
   DmsRdsEndpointAccessRoleArn:
     Value: !GetAtt DmsRdsEndpointAccessRole.Arn
+    Export:
+      Name: !Sub ${StackName}-DmsRdsEndpointAccessRoleArn

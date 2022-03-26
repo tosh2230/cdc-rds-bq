@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AWS DMS Endpoints and Replication Tasks
+Parameters:
+  VpcResourcesStack:
+    Type: String
+  S3Stack:
+    Type: String
+
+Resources:
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-endpoint.html
+  DmsEndpointSourceMySql:
+    Type: AWS::DMS::Endpoint
+    Properties:
+      EndpointIdentifier: source-endpoint-mysql
+      EngineName: mysql
+      EndpointType: source
+      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-dms-endpoint-mysqlsettings.html
+      MySqlSettings:
+        SecretsManagerSecretId:
+          Fn::ImportValue: !Sub ${VpcResourcesStack}-RdsSecretArn
+        SecretsManagerAccessRoleArn:
+          Fn::ImportValue: !Sub ${VpcResourcesStack}-DmsRdsEndpointAccessRoleArn
+
+  DmsEndpointTargetS3:
+    Type: AWS::DMS::Endpoint
+    Properties:
+      EndpointIdentifier: target-endpoint-s3
+      EngineName: s3
+      EndpointType: target
+      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-dms-endpoint-s3settings.html
+      S3Settings:
+        BucketName:
+          Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
+        ServiceAccessRoleArn:
+          Fn::ImportValue: !Sub ${S3Stack}-DmsS3EndpointAccessRoleArn
+        EncryptionMode: SSE_S3
+        DataFormat: parquet
+        ParquetVersion: PARQUET_2_0
+        CompressionType: GZIP
+        EnableStatistics: true
+        EncodingType: rle-dictionary
+        CdcMaxBatchInterval: 60
+        DataPageSize: 1024000
+        RowGroupLength: 10024
+        DictPageSizeLimit: 1024000
+        AddColumnName: true
+        TimestampColumnName: CdcTimestamp
+        DatePartitionEnabled: true
+        DatePartitionSequence: YYYYMMDD
+        DatePartitionDelimiter: SLASH
+
+  # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dms-replicationtask.html
+  ReplicationTask:
+    Type: AWS::DMS::ReplicationTask
+    Properties:
+      ReplicationTaskIdentifier: !Ref AWS::StackName
+      MigrationType: cdc
+      SourceEndpointArn: !Ref DmsEndpointSourceMySql
+      TargetEndpointArn: !Ref DmsEndpointTargetS3
+      ReplicationInstanceArn:
+        Fn::ImportValue: !Sub ${VpcResourcesStack}-ReplicationInstanceArn
+      # https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.html
+      ReplicationTaskSettings: '{
+          "TargetMetadata": {
+            "TargetSchema": "",
+            "LoadMaxFileSize": 0,
+            "BatchApplyEnabled": false,
+            "ParallelApplyBufferSize": 0,
+            "ParallelApplyQueuesPerThread": 0,
+            "ParallelApplyThreads": 0,
+            "ParallelLoadBufferSize": 0,
+            "ParallelLoadQueuesPerThread": 0,
+            "ParallelLoadThreads": 0,
+            "SupportLobs": true,
+            "FullLobMode": false,
+            "LobChunkSize": 0,
+            "InlineLobMaxSize": 0,
+            "LimitedSizeLobMode": true,
+            "LobMaxSize": 32,
+            "TaskRecoveryTableEnabled": false,
+          },
+          "ChangeProcessingTuning": {
+            "MemoryLimitTotal": 1024,
+            "MemoryKeepTime": 60,
+            "StatementCacheSize": 50,
+          },
+          "ChangeProcessingDdlHandlingPolicy": {
+            "HandleSourceTableDropped": true,
+            "HandleSourceTableTruncated": true,
+            "HandleSourceTableAltered": true,
+          },
+          "StreamBufferSettings": {
+            "StreamBufferCount": 3,
+            "CtrlStreamBufferSizeInMB": 5,
+            "StreamBufferSizeInMB": 8,
+          },
+          "FailTaskWhenCleanTaskResourceFailed": false,
+          "ErrorBehavior": {
+            "DataErrorPolicy": "LOG_ERROR",
+            "DataTruncationErrorPolicy": "LOG_ERROR",
+            "DataErrorEscalationPolicy": "SUSPEND_TABLE",
+            "DataErrorEscalationCount": 0,
+            "TableErrorPolicy": "SUSPEND_TABLE",
+            "TableErrorEscalationPolicy": "STOP_TASK",
+            "TableErrorEscalationCount": 0,
+            "RecoverableErrorCount": -1,
+            "RecoverableErrorThrottling": true,
+            "RecoverableErrorInterval": 5,
+            "RecoverableErrorThrottlingMax": 1800,
+            "RecoverableErrorStopRetryAfterThrottlingMax": true,
+            "ApplyErrorDeletePolicy": "IGNORE_RECORD",
+            "ApplyErrorInsertPolicy": "LOG_ERROR",
+            "ApplyErrorUpdatePolicy": "LOG_ERROR",
+            "ApplyErrorEscalationPolicy": "LOG_ERROR",
+            "ApplyErrorEscalationCount": 0,
+            "ApplyErrorFailOnTruncationDdl": false,
+            "FailOnNoTablesCaptured": true,
+            "FailOnTransactionConsistencyBreached": false,
+            "FullLoadIgnoreConflicts": true,
+          },
+        }'
+      # https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TableMapping.SelectionTransformation.Selections.html
+      TableMappings: '{
+          "rules": [{
+            "rule-type": "selection",
+            "rule-id": "1",
+            "rule-name": "1",
+            "object-locator": { "schema-name": "%", "table-name": "%" },
+            "rule-action": "include"
+          }]
+        }'

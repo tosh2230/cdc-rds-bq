@@ -15,7 +15,7 @@ Resources:
     Type: AWS::DMS::ReplicationInstance
     Properties:
       ReplicationInstanceIdentifier: !Ref StackName
-      ReplicationInstanceClass: dms.t3.nano
+      ReplicationInstanceClass: dms.t2.micro
       AllocatedStorage: 10
       MultiAZ: False
       AvailabilityZone: ap-northeast-1a
@@ -54,4 +54,5 @@ Resources:
 Outputs:
   ReplicationInstanceArn:
     Value: !Ref ReplicationInstance
-
+    Export:
+      Name: !Sub ${StackName}-ReplicationInstanceArn
