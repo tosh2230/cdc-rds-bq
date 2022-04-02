@@ -1,7 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Amazon S3 Bucket for AWS DMS Endpoints
+  Amazon S3 Bucket for AWS DMS Endpoints, Lambda function
+
+Parameters:
+  GcpServiceAccountSecretsArn:
+    Type: String
 
 Resources:
   # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
@@ -52,6 +56,107 @@ Resources:
                   - s3:DeleteObject
                 Resource:
                   - !Sub ${S3Bucket.Arn}/*
+
+  # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+  FunctionLoadParquetToBigQuery:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: load_parquet_to_bigquery
+      CodeUri: src/
+      Handler: handler.lambda_handler
+      Runtime: python3.9
+      MemorySize: 256
+      Timeout: 60
+      Layers:
+        - !Ref LayerGoogleCloudBigQuery
+        # - !Ref LayerPandasPyArrow
+      Role: !GetAtt RoleFunctionLoadParquetToBigQuery.Arn
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref S3Bucket
+            Events: s3:ObjectCreated:*
+      DeadLetterQueue:
+        TargetArn: !GetAtt DeadLetterQueue.Arn
+        Type: SQS
+
+  RoleFunctionLoadParquetToBigQuery:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: role_function_load_pq_to_bq
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+      Policies:
+        - PolicyName: GetGcpServiceAccount
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref GcpServiceAccountSecretsArn
+        - PolicyName: SendDeadLetterQueue
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource:
+                  - !GetAtt DeadLetterQueue.Arn
+
+  LayerGoogleCloudBigQuery:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: Google Cloud BigQuery
+      ContentUri: layer/google_cloud_bigquery
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
+
+  # LayerPandasPyArrow:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     Description: Pandas and PyArrow
+  #     ContentUri: layer/pandas_pyarrow
+  #     CompatibleRuntimes:
+  #       - python3.9
+  #   Metadata:
+  #     BuildMethod: python3.9
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: load_pq_to_bq_errors
+      MessageRetentionPeriod: 345600
+      VisibilityTimeout: 60
+
+  DeadLetterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Id: !Ref DeadLetterQueue
+        Statement:
+          - Sid: DeadLetterQueuePolicy
+            Effect: Allow
+            Principal: "*"
+            Action: SQS:*
+            Resource: !GetAtt DeadLetterQueue.Arn
+      Queues:
+        - !Ref DeadLetterQueue
 
 Outputs:
   S3BucketName:
