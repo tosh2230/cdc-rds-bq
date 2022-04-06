@@ -85,7 +85,7 @@ Resources:
     Properties:
       LayerName: LayerGoogleCloudBigQuery39
       Description: Google Cloud BigQuery
-      ContentUri: layer/google_cloud_bigquery
+      ContentUri: layer/google_cloud_bigquery/
       CompatibleRuntimes:
         - python3.9
     Metadata:
