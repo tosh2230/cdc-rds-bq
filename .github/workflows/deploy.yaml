@@ -29,4 +29,8 @@ jobs:
           pip install aws-sam-cli
       - name: Deploy Lambda Resources
         run: |
-          make deploy TEMPLATE_FILE=templates/lambda/lambda.yaml
+          sam build -t templates/lambda/lambda.yaml
+          sam deploy -t templates/lambda/lambda.yaml \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides "GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\"

@@ -8,6 +8,7 @@ Parameters:
     Type: String
   S3Stack:
     Type: String
+    Default: cdc-rds-bq-s3
 
 Resources:
   # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
