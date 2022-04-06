@@ -21,8 +21,8 @@ Resources:
       Runtime: python3.9
       MemorySize: 256
       Timeout: 60
-      Layers:
-        - !Ref LayerGoogleCloudBigQuery
+      # Layers:
+      #   - !Ref LayerGoogleCloudBigQuery
       Role: !GetAtt RoleFunctionLoadParquetToBigQuery.Arn
       Events:
         EventBridge:
