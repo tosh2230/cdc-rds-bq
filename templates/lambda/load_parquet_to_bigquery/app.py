@@ -13,9 +13,6 @@ from google.oauth2 import service_account
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-aws_region = os.environ["AWS_REGION"]
-gcp_sa_secret_name = os.environ["GCP_SA_SECRET_NAME"]
-
 
 class LambdaProcessor(object):
     def __init__(
@@ -32,7 +29,7 @@ class LambdaProcessor(object):
             dataset_id=key.split('/')[0],
             table_id=key.split('/')[1],
             file_obj=self.get_s3_object_body(bucket_name=bucket_name, key=key),
-            service_account_info=self.get_service_account_info(secret_id=gcp_sa_secret_name),
+            service_account_info=self.get_service_account_info(secret_id=os.environ["GCP_SA_SECRET_NAME"]),
         )
 
         return {
@@ -58,7 +55,7 @@ class LambdaProcessor(object):
 
     def get_service_account_info(self, secret_id: str) -> dict:
         service_account_info: str
-        sm_client = aws_client(service_name="secretsmanager", region_name=aws_region),
+        sm_client = aws_client(service_name="secretsmanager", region_name=os.environ["AWS_REGION"])
         response = sm_client.get_secret_value(
             SecretId=secret_id
         )
