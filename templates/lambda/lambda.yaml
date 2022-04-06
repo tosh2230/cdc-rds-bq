@@ -18,7 +18,7 @@ Resources:
       FunctionName: load_parquet_to_bigquery
       CodeUri: src/
       Handler: handler.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.8
       MemorySize: 256
       Timeout: 60
       Layers:
@@ -88,9 +88,9 @@ Resources:
       Description: Google Cloud BigQuery
       ContentUri: layer/google_cloud_bigquery/
       CompatibleRuntimes:
-        - python3.9
+        - python3.8
     Metadata:
-      BuildMethod: python3.9
+      BuildMethod: python3.8
 
   LayerPandasPyArrow:
     Type: AWS::Serverless::LayerVersion
@@ -99,9 +99,9 @@ Resources:
       Description: Pandas and PyArrow
       ContentUri: layer/pandas_pyarrow
       CompatibleRuntimes:
-        - python3.9
+        - python3.8
     Metadata:
-      BuildMethod: python3.9
+      BuildMethod: python3.8
 
   DeadLetterQueue:
     Type: AWS::SQS::Queue
