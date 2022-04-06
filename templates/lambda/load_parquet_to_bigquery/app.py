@@ -52,6 +52,7 @@ class LambdaProcessor(object):
         buffer = io.BytesIO()
         object = client.Object(bucket_name, key)
         object.download_fileobj(buffer)
+        buffer.seek(0)
         return buffer
 
     def get_service_account_info(self, secret_id: str) -> dict:
