@@ -26,7 +26,7 @@ class LambdaProcessor(object):
 
     def main(self) -> dict:
         bucket_name, key = self.read_s3_event(event=self.event)
-        previous_rows, current_rows = self.load_file_to_bq(
+        current_rows = self.load_file_to_bq(
             dataset_id=key.split('/')[0],
             table_id=key.split('/')[1],
             file_obj=self.get_s3_object_body(bucket_name=bucket_name, key=key),
@@ -34,7 +34,6 @@ class LambdaProcessor(object):
         )
 
         return {
-            "PreviousRows": previous_rows,
             "CurrentRows": current_rows,
         }
 
@@ -72,8 +71,8 @@ class LambdaProcessor(object):
         dataset_id: str,
         table_id: str,
         file_obj: io.BytesIO,
-        service_account_info: dict
-    ) -> Tuple[int, int]:
+        service_account_info: dict,
+    ) -> int:
         credentials = service_account.Credentials.from_service_account_info(info=service_account_info)
         bq_client = bigquery.Client(credentials=credentials)
 
