@@ -33,4 +33,7 @@ jobs:
           sam deploy -t templates/lambda/lambda.yaml \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
+            --stack-name cdc-rds-bq-lambda \
+            --s3-prefix cdc-rds-bq-lambda\
+            --capabilities ["CAPABILITY_NAMED_IAM"] \
             --parameter-overrides GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\"
