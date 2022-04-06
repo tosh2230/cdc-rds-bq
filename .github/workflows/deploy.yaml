@@ -33,4 +33,4 @@ jobs:
           sam deploy -t templates/lambda/lambda.yaml \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
-            --parameter-overrides "GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\"
+            --parameter-overrides GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\"
