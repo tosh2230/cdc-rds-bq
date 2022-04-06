@@ -21,8 +21,9 @@ Resources:
       Runtime: python3.9
       MemorySize: 256
       Timeout: 60
-      # Layers:
-      #   - !Ref LayerGoogleCloudBigQuery
+      Layers:
+        # - !Ref LayerGoogleCloudBigQuery
+        - !Ref LayerPandasPyArrow
       Role: !GetAtt RoleFunctionLoadParquetToBigQuery.Arn
       Events:
         EventBridge:
@@ -91,16 +92,16 @@ Resources:
     Metadata:
       BuildMethod: python3.9
 
-  # LayerPandasPyArrow:
-  #   Type: AWS::Serverless::LayerVersion
-  #   Properties:
-  #     LayerName: LayerPandasPyArrow39
-  #     Description: Pandas and PyArrow
-  #     ContentUri: layer/pandas_pyarrow
-  #     CompatibleRuntimes:
-  #       - python3.9
-  #   Metadata:
-  #     BuildMethod: python3.9
+  LayerPandasPyArrow:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: LayerPandasPyArrow39
+      Description: Pandas and PyArrow
+      ContentUri: layer/pandas_pyarrow
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
 
   DeadLetterQueue:
     Type: AWS::SQS::Queue
