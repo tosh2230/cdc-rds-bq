@@ -12,3 +12,4 @@ setup:
 	@make deploy TEMPLATE_FILE=templates/s3/s3.yaml
 	@make deploy TEMPLATE_FILE=templates/vpc_resources/root.yaml
 	@make deploy TEMPLATE_FILE=templates/dms/dms.yaml
+	@make deploy TEMPLATE_FILE=templates/lambda/lambda.yaml
