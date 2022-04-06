@@ -16,14 +16,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: load_parquet_to_bigquery
-      CodeUri: src/
-      Handler: handler.lambda_handler
-      Runtime: python3.8
+      PackageType: Image
       MemorySize: 256
       Timeout: 60
-      Layers:
-        # - !Ref LayerGoogleCloudBigQuery
-        - !Ref LayerPandasPyArrow
       Role: !GetAtt RoleFunctionLoadParquetToBigQuery.Arn
       Events:
         EventBridge:
@@ -44,6 +39,10 @@ Resources:
       DeadLetterQueue:
         TargetArn: !GetAtt DeadLetterQueue.Arn
         Type: SQS
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./load_parquet_to_bigquery
+      DockerTag: latest
 
   RoleFunctionLoadParquetToBigQuery:
     Type: AWS::IAM::Role
@@ -80,28 +79,6 @@ Resources:
                   - sqs:ReceiveMessage
                 Resource:
                   - !GetAtt DeadLetterQueue.Arn
-
-  LayerGoogleCloudBigQuery:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: LayerGoogleCloudBigQuery39
-      Description: Google Cloud BigQuery
-      ContentUri: layer/google_cloud_bigquery/
-      CompatibleRuntimes:
-        - python3.8
-    Metadata:
-      BuildMethod: python3.8
-
-  LayerPandasPyArrow:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: LayerPandasPyArrow39
-      Description: Pandas and PyArrow
-      ContentUri: layer/pandas_pyarrow
-      CompatibleRuntimes:
-        - python3.8
-    Metadata:
-      BuildMethod: python3.8
 
   DeadLetterQueue:
     Type: AWS::SQS::Queue
