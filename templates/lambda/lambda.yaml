@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AWS Lambda function for loading parquet files to Google BigQuery
+
+Parameters:
+  GcpServiceAccountSecretsArn:
+    Type: String
+  S3Stack:
+    Type: String
+
+Resources:
+  # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+  FunctionLoadParquetToBigQuery:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: load_parquet_to_bigquery
+      CodeUri: src/
+      Handler: handler.lambda_handler
+      Runtime: python3.9
+      MemorySize: 256
+      Timeout: 60
+      Layers:
+        - !Ref LayerGoogleCloudBigQuery
+      Role: !GetAtt RoleFunctionLoadParquetToBigQuery.Arn
+      Events:
+        EventBridge:
+          Type: EventBridgeRule
+          Properties:
+            Pattern:
+              source:
+                - aws.s3
+              detail-type:
+                - Object Created
+              detail:
+                bucket:
+                  name:
+                    - Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
+                object:
+                  key:
+                    - prefix: mysqlslap/
+      DeadLetterQueue:
+        TargetArn: !GetAtt DeadLetterQueue.Arn
+        Type: SQS
+
+  RoleFunctionLoadParquetToBigQuery:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: role_function_load_pq_to_bq
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+      Policies:
+        - PolicyName: GetGcpServiceAccount
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref GcpServiceAccountSecretsArn
+        - PolicyName: SendDeadLetterQueue
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - sqs:ReceiveMessage
+                Resource:
+                  - !GetAtt DeadLetterQueue.Arn
+
+  LayerGoogleCloudBigQuery:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: LayerGoogleCloudBigQuery39
+      Description: Google Cloud BigQuery
+      ContentUri: layer/google_cloud_bigquery
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
+
+  # LayerPandasPyArrow:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: LayerPandasPyArrow39
+  #     Description: Pandas and PyArrow
+  #     ContentUri: layer/pandas_pyarrow
+  #     CompatibleRuntimes:
+  #       - python3.9
+  #   Metadata:
+  #     BuildMethod: python3.9
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: load_pq_to_bq_errors
+      MessageRetentionPeriod: 345600
+      VisibilityTimeout: 60
+
+  DeadLetterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Id: !Ref DeadLetterQueue
+        Statement:
+          - Sid: DeadLetterQueuePolicy
+            Effect: Allow
+            Principal: "*"
+            Action: SQS:*
+            Resource: !GetAtt DeadLetterQueue.Arn
+      Queues:
+        - !Ref DeadLetterQueue
