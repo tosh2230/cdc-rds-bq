@@ -1,11 +1,12 @@
 import base64
+import io
 import json
 import logging
 import os
 import urllib
-from typing import IO, Tuple
+from typing import Tuple
 
-from boto3 import client as aws_client
+import boto3
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
@@ -46,16 +47,16 @@ class LambdaProcessor(object):
         )
         return bucket_name, key
 
-    def get_s3_object_body(self, bucket_name: str, key: str) -> IO[bytes]:
-        s3_client = aws_client(service_name="s3")
-        return (
-            s3_client.get_object(Bucket=bucket_name, Key=key)["Body"]
-            .read()
-        )
+    def get_s3_object_body(self, bucket_name: str, key: str) -> io.BytesIO:
+        client = boto3.resource('s3')
+        buffer = io.BytesIO()
+        object = client.Object(bucket_name, key)
+        object.download_fileobj(buffer)
+        return buffer
 
     def get_service_account_info(self, secret_id: str) -> dict:
         service_account_info: str
-        sm_client = aws_client(service_name="secretsmanager", region_name=os.environ["AWS_REGION"])
+        sm_client = boto3.client(service_name="secretsmanager", region_name=os.environ["AWS_REGION"])
         response = sm_client.get_secret_value(
             SecretId=secret_id
         )
@@ -69,7 +70,7 @@ class LambdaProcessor(object):
         self,
         dataset_id: str,
         table_id: str,
-        file_obj: IO[bytes],
+        file_obj: io.BytesIO,
         service_account_info: dict
     ) -> Tuple[int, int]:
         credentials = service_account.Credentials.from_service_account_info(info=service_account_info)
