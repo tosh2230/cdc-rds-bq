@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          pip install aws-sam-cli
+          pip install --no-cache-dir aws-sam-cli
       - name: Deploy Lambda Resources
         run: |
           sam build -t templates/lambda/lambda.yaml
