@@ -38,3 +38,4 @@ jobs:
             --s3-prefix cdc-rds-bq-lambda \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\"
+            --image-repository="load_parquet_to_bigquery"
