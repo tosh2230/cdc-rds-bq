@@ -76,7 +76,6 @@ class LambdaProcessor(object):
         bq_client = bigquery.Client(credentials=credentials)
 
         destination = f"{dataset_id}.{table_id}"
-        previous_rows = bq_client.get_table(table=destination).num_rows
         job_config = bigquery.LoadJobConfig(
             source_format=bigquery.SourceFormat.PARQUET,
             write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
@@ -90,7 +89,7 @@ class LambdaProcessor(object):
         )
         job.result()
         current_rows = bq_client.get_table(table=destination).num_rows
-        return previous_rows, current_rows
+        return current_rows
 
 
 def lambda_handler(event, context) -> dict:
