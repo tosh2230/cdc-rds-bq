@@ -92,14 +92,14 @@ Resources:
                 Resource: !Sub
                   - arn:aws:s3:::${S3Bucket}
                   - S3Bucket:
-                    Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
+                      Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
               - Effect: Allow
                 Action:
                   - s3:GetObject
                 Resource: !Sub
                   - arn:aws:s3:::${S3Bucket}/*
                   - S3Bucket:
-                    Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
+                      Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
 
   DeadLetterQueue:
     Type: AWS::SQS::Queue
