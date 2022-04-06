@@ -16,6 +16,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: load_parquet_to_bigquery
+      PackageType: Zip
       MemorySize: 256
       Timeout: 60
       Role: !GetAtt RoleFunctionLoadParquetToBigQuery.Arn
