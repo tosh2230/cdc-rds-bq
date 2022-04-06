@@ -5,8 +5,7 @@ import os
 import urllib
 from typing import IO, Tuple
 
-from boto3 import Session
-from boto3.resources.base import ServiceResource
+from boto3 import client as aws_client
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
@@ -17,25 +16,15 @@ logger.setLevel(logging.INFO)
 aws_region = os.environ["AWS_REGION"]
 gcp_sa_secret_name = os.environ["GCP_SA_SECRET_NAME"]
 
-session = Session()
-s3_client: ServiceResource
-sm_client: ServiceResource
-
 
 class LambdaProcessor(object):
     def __init__(
         self,
         event: dict,
         context: dict,
-        s3_client: ServiceResource,
-        sm_client: ServiceResource,
-        gcp_sa_secret_name: str,
     ):
         self.event = event
         self.context = context
-        self.s3_client = s3_client
-        self.sm_client = sm_client
-        self.gcp_sa_secret_name = gcp_sa_secret_name
 
     def main(self) -> dict:
         bucket_name, key = self.read_s3_event(event=self.event)
@@ -43,7 +32,7 @@ class LambdaProcessor(object):
             dataset_id=key.split('/')[0],
             table_id=key.split('/')[1],
             file_obj=self.get_s3_object_body(bucket_name=bucket_name, key=key),
-            service_account_info=self.get_service_account_info(secret_id=self.gcp_sa_secret_name),
+            service_account_info=self.get_service_account_info(secret_id=gcp_sa_secret_name),
         )
 
         return {
@@ -61,8 +50,9 @@ class LambdaProcessor(object):
         return bucket_name, key
 
     def get_s3_object_body(self, bucket_name: str, key: str) -> IO[bytes]:
+        s3_client = aws_client(service_name="s3")
         return (
-            self.s3_client.meta.client
+            s3_client.meta.client
             .get_object(Bucket=bucket_name, Key=key)["Body"]
             .read()
             .decode("utf-8")
@@ -70,7 +60,8 @@ class LambdaProcessor(object):
 
     def get_service_account_info(self, secret_id: str) -> dict:
         service_account_info: str
-        response = self.sm_client.get_secret_value(
+        sm_client = aws_client(service_name="secretsmanager", region_name=aws_region),
+        response = sm_client.get_secret_value(
             SecretId=secret_id
         )
         if 'SecretString' in response:
@@ -111,9 +102,5 @@ def lambda_handler(event, context) -> dict:
     processor = LambdaProcessor(
         event=event,
         context=context,
-        s3_client=session.resource(service_name="s3"),
-        sm_client=session.resource(service_name="secretsmanager", region_name=aws_region),
-        gcp_sa_secret_name=gcp_sa_secret_name
-
     )
     return processor.main()
