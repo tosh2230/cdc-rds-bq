@@ -52,8 +52,7 @@ class LambdaProcessor(object):
     def get_s3_object_body(self, bucket_name: str, key: str) -> IO[bytes]:
         s3_client = aws_client(service_name="s3")
         return (
-            s3_client.meta.client
-            .get_object(Bucket=bucket_name, Key=key)["Body"]
+            s3_client.get_object(Bucket=bucket_name, Key=key)["Body"]
             .read()
             .decode("utf-8")
         )
