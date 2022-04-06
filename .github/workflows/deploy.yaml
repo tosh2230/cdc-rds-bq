@@ -36,5 +36,5 @@ jobs:
             --stack-name cdc-rds-bq-lambda \
             --s3-bucket ${{ secrets.AWS_SAM_S3_BUCKET }} \
             --s3-prefix cdc-rds-bq-lambda \
-            --capabilities ["CAPABILITY_NAMED_IAM"] \
+            --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\"
