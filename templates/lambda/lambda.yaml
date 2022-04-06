@@ -82,6 +82,24 @@ Resources:
                   - sqs:ReceiveMessage
                 Resource:
                   - !GetAtt DeadLetterQueue.Arn
+        - PolicyName: GetS3CdcObjects
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub
+                  - arn:aws:s3:::${S3Bucket}
+                  - S3Bucket:
+                    Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub
+                  - arn:aws:s3:::${S3Bucket}/*
+                  - S3Bucket:
+                    Fn::ImportValue: !Sub ${S3Stack}-S3BucketName
 
   DeadLetterQueue:
     Type: AWS::SQS::Queue
