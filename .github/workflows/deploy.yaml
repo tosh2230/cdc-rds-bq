@@ -15,7 +15,7 @@ jobs:
       - name: Setup Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -37,5 +37,5 @@ jobs:
             --s3-bucket ${{ secrets.AWS_SAM_S3_BUCKET }} \
             --s3-prefix cdc-rds-bq-lambda \
             --capabilities CAPABILITY_NAMED_IAM \
-            --parameter-overrides GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\"
+            --parameter-overrides GcpServiceAccountSecretsArn=\"${{ secrets.GCP_SERVICE_ACCOUNT_SECRETS_ARN }}\" \
             --image-repository="load_parquet_to_bigquery"
