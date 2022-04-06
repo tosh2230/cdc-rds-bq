@@ -54,7 +54,6 @@ class LambdaProcessor(object):
         return (
             s3_client.get_object(Bucket=bucket_name, Key=key)["Body"]
             .read()
-            .decode("utf-8")
         )
 
     def get_service_account_info(self, secret_id: str) -> dict:
