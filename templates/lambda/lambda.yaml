@@ -20,6 +20,9 @@ Resources:
       MemorySize: 256
       Timeout: 60
       Role: !GetAtt RoleFunctionLoadParquetToBigQuery.Arn
+      Environment:
+        Variables:
+          GCP_SA_SECRET_NAME: cdc-rds-bq-lambda
       Events:
         EventBridge:
           Type: EventBridgeRule
