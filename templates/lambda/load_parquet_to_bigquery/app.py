@@ -39,7 +39,7 @@ class LambdaProcessor(object):
 
     @staticmethod
     def read_s3_event(event: dict) -> Tuple[str, str]:
-        s3_event = event["Records"][0]["s3"]
+        s3_event = event["detail"]
         bucket_name = s3_event["bucket"]["name"]
         key = urllib.parse.unquote_plus(
             s3_event["object"]["key"], encoding="utf-8"
